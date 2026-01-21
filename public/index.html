@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Blog API</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .post {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+        }
+
+        button {
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+        }
+
+        button.delete {
+            background: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>My Blog Platform</h1>
+
+    <div style="background: #f9f9f9; padding: 1rem; margin-bottom: 2rem;">
+        <h3>Create New Post</h3>
+        <div class="form-group"><input type="text" id="title" placeholder="Title (Required)"></div>
+        <div class="form-group"><input type="text" id="author" placeholder="Author (Optional)"></div>
+        <div class="form-group"><textarea id="body" rows="4" placeholder="Body (Required)"></textarea></div>
+        <button onclick="createPost()">Publish</button>
+    </div>
+
+    <div id="posts-container"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/blogs';
+
+        // Fetch and display posts
+        async function loadPosts() {
+            const res = await fetch(API_URL);
+            const posts = await res.json();
+            const container = document.getElementById('posts-container');
+            container.innerHTML = posts.map(post => `
+                <div class="post">
+                    <h2>${post.title}</h2>
+                    <small>By ${post.author} on ${new Date(post.createdAt).toLocaleDateString()}</small>
+                    <p>${post.body}</p>
+                    <button class="delete" onclick="deletePost('${post._id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Create a new post
+        async function createPost() {
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value || "Anonymous";
+            const body = document.getElementById('body').value;
+
+            if (!title || !body) return alert("Title and Body are required!");
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, author, body })
+            });
+
+            // Clear form and reload
+            document.getElementById('title').value = '';
+            document.getElementById('body').value = '';
+            loadPosts();
+        }
+
+        // Delete a post
+        async function deletePost(id) {
+            if (confirm('Are you sure?')) {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                loadPosts();
+            }
+        }
+
+        loadPosts();
+    </script>
+</body>
+
+</html>
